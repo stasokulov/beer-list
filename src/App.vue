@@ -16,6 +16,7 @@
 </template>
 
 <script>
+import { ref } from 'vue'
 import DrinkItem from './components/DrinkItem.vue'
 
 export default {
@@ -26,57 +27,64 @@ export default {
   created () {
     this.getDrinksList()
   },
-  data () {
-    return {
-      drinksList: [],
-      linkToDrinks: 'https://api.punkapi.com/v2/beers',
-      page: 1,
-      showButton: false,
-      loading: false
-    }
-  },
-  methods: {
-    getDrinksList: async function () {
-      const url = `${this.linkToDrinks}?page=${this.page}`
+  setup () {
+    const drinksList = ref([])
+    const linkToDrinks = ref('https://api.punkapi.com/v2/beers')
+    const page = ref(1)
+    const showButton = ref(false)
+    const loading = ref(false)
+    const getDrinksList = async function () {
+      const url = `${linkToDrinks.value}?page=${page.value}`
       try {
-        const drinksList = await fetch(url)
+        const newDrinksList = await fetch(url)
           .then(response => response.json())
           .then(json => {
             return json
           })
-        if (drinksList.length === 0) {
-          this.showButton = false
+        if (newDrinksList.length === 0) {
+          showButton.value = false
         } else {
-          this.loading = false
-          this.drinksList = [...this.drinksList, ...drinksList]
-          this.showButton = true
+          loading.value = false
+          drinksList.value = [...drinksList.value, ...newDrinksList]
+          showButton.value = true
         }
       } catch (error) {
         console.error(error)
       }
-    },
-    addDrinks: function () {
-      this.loading = true
-      this.page++
-      this.getDrinksList()
-    },
-    deleteDrink: function (id) {
-      this.drinksList.forEach((drink, index) => {
+    }
+    const addDrinks = function () {
+      loading.value = true
+      page.value++
+      getDrinksList()
+    }
+    const deleteDrink = function (id) {
+      drinksList.value.forEach((drink, index) => {
         if (drink.id === id) {
-          this.drinksList.splice(index, 1)
+          drinksList.value.splice(index, 1)
         }
       })
-    },
-    editDrink: function (array) {
+    }
+    const editDrink = function (array) {
       const id = array[0]
       const name = array[1]
       const description = array[2]
-      this.drinksList.forEach((drink) => {
+      drinksList.value.forEach((drink) => {
         if (drink.id === id) {
           drink.name = name
           drink.description = description
         }
       })
+    }
+    return {
+      drinksList,
+      linkToDrinks,
+      page,
+      showButton,
+      loading,
+      getDrinksList,
+      addDrinks,
+      deleteDrink,
+      editDrink
     }
   }
 }
